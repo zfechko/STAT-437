@@ -1,0 +1,96 @@
+---
+title: "dplyr basics"
+date: today
+format:
+    html:
+        highlight-style: github
+        monofont: "Fira Code"
+        toc: true
+---
+
+```{r setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(nycflights13)
+```
+
+```{r}
+head(flights) #nycflights13::flights
+```
+
+# Row operations
+## `filter`
+
+`filter (filter{dplyr})` selects rows for which some specified conditions are true. Its syntax is:  
+```r
+filter(data, ...)
+```
+Where `data` is the name of a data frame or "tibble"
+
+Example: select rows from `flights`, for which year is 2013, month is either 11 or 12, and tailnum is N14228
+
+```{r}
+filter(flights, year == 2013, month %in% c(11, 12), tailnum == "N14228")
+```
+
+Example: select rows from `flights`, for which `arr_delay` is $\leq 120$ and `dep_delay` is $\leq 120$
+
+```{r}
+#uses logic for the conditions, not greater than 120
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+```
+
+You could also use `<=` like so
+```r
+filter(flights, arr_delay <= 120, dep_delay <= 120)
+```
+
+## `arrange`
+
+`arrange` orders the rows of a data frame according to some criteria. Its syntax is  
+
+```r
+arrange(data, ...)
+```
+
+where `data` is the name of a data frame or tibble and `...` are other conditions
+
+Example: order the rows of `flights` by year number, month number, and day number
+
+```{r}
+#unique(flights$year)
+arrange(flights, year, month, day)
+```
+
+# Column operations
+## `select`
+
+`select` keeps columns whose names are specified. Its syntax is:  
+
+```r
+select(data, ...)
+```
+
+Example: keep columns of flights with column names year up till day
+
+```{r}
+select(flights, year:day)
+```
+
+<div class="alert alert-block alert-warning">
+<b>Heads up:</b> the latest version of dplyr might actually drop variables instead of just showing the variables that meet the condition when using the <code>select</code> function.
+</div>
+
+Example: select from `flights` all columns except those from year to day (inclusive)
+
+```{r}
+select(flights, -(year:day))
+```
+
+## `mutate`
+`mutate` adds new columns at the end of a dataset, and these new columns are often functions of existing columns
+
+```r
+mutate(data, conditions)
+```

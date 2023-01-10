@@ -1,0 +1,9 @@
+---
+title: "HW 1"
+author: "Zach Fechko (011711215)"
+date: "`r.format(Sys.Date(), '%d %B, %Y')`"
+format: 
+    html:
+        highlight-style: dracula
+---
+
