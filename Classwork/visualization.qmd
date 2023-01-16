@@ -1,0 +1,196 @@
+---
+title: "visualization basics"
+date: today
+format:
+    html:
+        highlight-style: github
+        monofont: "Fira Code"
+        code-overflow: wrap
+        toc: true
+        theme: 
+            light: flatly
+            dark: darkly
+---
+
+# Why visualization?
+Data visualization  
+
+- provides preliminary understanding of the data
+- helps present and disseminate knowledge
+- is a relatively under-developed subject of high-dimensional data science
+
+Different features of data and differnt focuses of visualization require different visualization softwares
+
+# Two visualization paradigms
+
+- **Static visualization:** a snapshot of a dataset (non-interactive)
+- **Dynamic:** a sequence of snapshots of a dataset, or a snapshot of a dataset that a user can interact with (like using the shiny package in R)
+
+## Static visualization
+There are several R packages to produce static visualizations.  
+
+- `ggplot2` is a popularized package for static visualization. This is the library that we will be using this semester.
+- R command `plot` is a basic function for static visualization
+- `igraph` creates graphs (as representations of network data such as friendship networks)
+  - works like python's `networkx` package
+- `ggdendro` creates dendrograms and tree diagrams for clustering tasks
+- `ggmpap` visualizes data frames over maps (e.g. crime data over a map of the US)
+
+```{r}
+#| code-fold: true
+library(ggplot2)
+#create a random scatter plot
+set.seed(123)
+df <- data.frame(x = rnorm(100), y = rnorm(100))
+
+ggplot(df, aes(x, y)) + geom_point()
+```
+
+## Dynamic visualization
+There are also R packages for dynamic data visualizations
+
+- `plotly` which visualizes data frames dynamically
+- `gganimate` which visualizes data frame dynamically.
+
+These packages and those mentioned in the previous slide are somehow connected with and based on `ggplot2`.
+
+The below plot is created using `plotly`
+
+```{r, message=FALSE}
+#| code-fold: true
+library(plotly)
+library(gapminder)
+
+p <- gapminder %>%
+  filter(year==1977) %>%
+  ggplot( aes(gdpPercap, lifeExp, size = pop, color=continent)) +
+  geom_point() +
+  theme_bw()
+
+ggplotly(p)
+```
+
+# ggplot2
+
+The elements involved in a ggplot2 plot are:
+
+- data, aesthetic mappings, geometric objects
+- statistical transformations
+- scales, coordinate system
+- facets
+
+These elements will be integrated via ggplot2 grammar  
+In short:  
+
+- a plot maps data to visual elements via specific grammar
+- ggplot2 builds a plot layer by layer
+
+## On some terms
+- aesthetic mappings describe how variables in data are mapped to aesthetic attributes we can perceiv
+
+## An illustration on `ggplot2`
+
+The `mpg` data frame comes with `ggplot2` and will be used to illustrate the grammar of graphics.
+
+```{r}
+head(mpg)
+```
+
+Plot `displ` vs `hwy` with `geom_point()`.
+
+```{r}
+p1 <- ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+p1
+```
+
+- `p1` is the handle for the plot
+- the geometric object `geom_point()` is "point", which results in a scatter plot
+- the aesthetic mapping `mapping = aes` maps `displ` and `hwy` to `x` and `y` respectively
+
+```{r}
+ggplot(mpg) + 
+  geom_line(mapping = aes(x = displ, y = hwy))
+```
+
+- Here we use `geom_line` which results in a line plot
+
+### A graphic template
+
+The basic structure of a ggplot2 command is:  
+```r
+ggplot(data = <DATA>) +
+  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+```
+
+## Elementary Visualization
+Using the `mpg` dataset we will illustrate several instances of elementary visualization.  
+
+- scatter plot
+- density plot, histogram
+- box plot
+- bar plot, pie chart
+
+For this section we're only going to focus on a few variables in the `mpg` dataset.  
+
+```{r}
+mptmp <- mpg %>% select(displ, hwy, drv, class)
+head(mptmp)
+```
+
+Convert character variables in `mpg` into factors by using `dplyr::mutate_if()`
+  
+```{r}
+mpg = mpg %>% dplyr::mutate_if(is.character, as.factor)
+class(mpg$class)
+```
+
+### Scatter plot
+
+```{r}
+p1
+```
+
+#### color
+```{r}
+#| code-fold: true
+#plot displ vs hwy where each class is a different color
+p1a <- ggplot(mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+p1a
+```
+
+#### shape
+```{r}
+#| code-fold: true
+#plot displ vs hwy where each class is a different shape
+p1b <- ggplot(mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+p1b
+```
+
+since there are more than 6 class levels but shape values are not manually provided. Namely, unless otherwise specified, only 6 default shapes are used
+
+this can be resolved like so
+  
+```{r}
+p1b <- ggplot(mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class)) +
+  scale_shape_manual(values = 1:length(unique(mpg$class)))
+
+p1b
+```
+
+#### Adding axis labels and title
+
+```{r}
+#| code-fold: true
+p1b + xlab("Engine Displacement") + ylab("Highway MPG") +
+  ggtitle("Efficiency") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+:::{.callout-note}
+Axis labels and title should all be characters or strings.
+
+The command `theme(plot.title = element_text(hjust = 0.5))` centers the title.
+:::
