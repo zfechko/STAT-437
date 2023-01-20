@@ -152,7 +152,7 @@ p1
 ```
 
 #### color
-```{r}
+```{r label="color"}
 #| code-fold: true
 #plot displ vs hwy where each class is a different color
 p1a <- ggplot(mpg) +
@@ -161,7 +161,7 @@ p1a
 ```
 
 #### shape
-```{r}
+```{r label="shape"}
 #| code-fold: true
 #plot displ vs hwy where each class is a different shape
 p1b <- ggplot(mpg) +
@@ -173,7 +173,7 @@ since there are more than 6 class levels but shape values are not manually provi
 
 this can be resolved like so
   
-```{r}
+```{r label="shape2"}
 p1b <- ggplot(mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, shape = class)) +
   scale_shape_manual(values = 1:length(unique(mpg$class)))
@@ -183,7 +183,7 @@ p1b
 
 #### Adding axis labels and title
 
-```{r}
+```{r label="axis labels"}
 #| code-fold: true
 p1b + xlab("Engine Displacement") + ylab("Highway MPG") +
   ggtitle("Efficiency") + theme(plot.title = element_text(hjust = 0.5))
@@ -194,3 +194,55 @@ Axis labels and title should all be characters or strings.
 
 The command `theme(plot.title = element_text(hjust = 0.5))` centers the title.
 :::
+
+### Density Plot
+
+Density plots can be used to:  
+
+- visually check model assumptions (such as if random errors are Gaussian)
+- visually compare a response's behavior under different conditions (such as sales amounts in different seasons)
+
+```{r label="density"}
+#| code-fold: true
+#plot the density of hwy for compact, suv, and 2seater cars
+mpg1 <- mpg %>% filter(class %in% c("compact", "suv", "2seater"))
+
+p2 <- ggplot(mpg1, aes(x = hwy, color = class, fill = class)) +
+  geom_density(linetype = "dashed", alpha = 0.5) + 
+  theme_bw()
+p2
+```
+
+### Histogram
+
+Create a histogram for `hwy` of 3 classes of cars (using mpg1 from the density plot)
+
+```{r label="histogram"}
+#| code-fold: true
+p2c <- ggplot(mpg1, aes(x = hwy, fill = class)) +
+  geom_histogram(bins = 20, position = "dodge") +
+  theme_bw()
+p2c
+```
+
+### Box plot
+
+Boxplot, also referred to as the box-and-whisker plot, does not present full distributional information as a density plot. But it can be used to visually check:  
+
+- the median of the data; the skewness
+- outliers in the data
+
+```{r label="boxplot"}
+#| code-fold: true
+p3 <- ggplot(mpg1, aes(x = class, y = hwy)) +
+  geom_boxplot() +
+  theme_bw() +
+  stat_summary(fun.y = mean, geom = "point", shape = 18, size = 3)
+ggplotly(p3)
+```
+
+### Bar plot
+
+A bar plot represents a quantity of interest via the height of a bar.  
+
+```{r label="barplot"}
