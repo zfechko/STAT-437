@@ -5,6 +5,7 @@ date: today
 format: 
     html:
         highlight-style: dracula
+        code-overflow: wrap
         theme: 
             light: flatly
             dark: darkly
@@ -19,34 +20,81 @@ library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(nycflights13)
+library(plotly)
 ```
 
 ## Problem 1
 
 ```{r}
-# create a data frame from flights with the following attributes:
+# create data frame df from flights with the following attributes:
 # - months 12, 1, 2, 6, 7, and 8
 # - carriers UA, AA, and DL
 # - distance greater than 700
-# - average arr_delay by month
+# - create column average arr_delay by month
+flights_sml <- flights %>% select(month, carrier, distance, arr_delay)
 
-flights %>%
-    filter(month %in% c(12, 1, 2, 6, 7, 8) & carrier %in% c("UA", "AA", "DL") & distance > 700) %>%
-    group_by(month) %>%
-    summarise(arr_delay = mean(arr_delay, na.rm = TRUE)) %>%
-    arrange(month) %>%
-    print()
+df <- flights_sml %>% 
+    filter(month %in% c(12, 1, 2, 6, 7, 8) & carrier %in% c("UA", "AA", "DL") & distance > 700) %>% 
+    group_by(month, carrier) %>% 
+    summarise(avg_arr_delay = mean(arr_delay, na.rm = TRUE))
+
+df
 ```
+
 
 ### Problem 1.a
 In a single plot, create a density plot for `arr_delay` for each of the 6 months with `color` aesthetic designated by month. Note that you need to convert `month` to a factor in order to create the plot. What can you say about the average `arr_delay` for each month?
 
-```{r}
-# convert month to factor
-flights %>%
+```{r label="Problem 1.a"}
+#convert month to factor
+df1a <- flights_sml %>%
     filter(month %in% c(12, 1, 2, 6, 7, 8) & carrier %in% c("UA", "AA", "DL") & distance > 700) %>%
-    mutate(month = factor(month)) %>%
-    ggplot(aes(x = arr_delay, color = month)) +
-    geom_density() +
-    labs(title = "Average Arrival Delay by Month", x = "Arrival Delay (min)", y = "Density")
+    group_by(month)
+
+df1a$month <- as.factor(df1a$month)
+
+head(df1a)
+
+# create density plot
+p1a <- ggplot(df1a) +
+    geom_density(mapping = aes(x = arr_delay, color = month)) +
+    labs(title = "Density Plot of Arrival Delay by Month", x = " Arrival Delay", y = "Density")
+
+p1a
 ```
+
+```{r label="Problem 1.a using averages"}
+df$month <- as.factor(df$month)
+
+ggplot(df) +
+    geom_density(mapping = aes(x = avg_arr_delay, color = month)) +
+    labs(title = "Density Plot of Arrival Delay by Month", x = " Arrival Delay", y = "Density") 
+```
+
+### Problem 1.b
+In a single plot, create a boxplot for `arr_delay` for each of the 3 carriers. What can you say about the average `arr_delay` for each carrier?
+
+```{r label="Problem 1.b", message=FALSE}
+df1 <- flights_sml %>% 
+    filter(month %in% c(12, 1, 2, 6, 7, 8) & carrier %in% c("UA", "AA", "DL") & distance > 700) %>% 
+    group_by(carrier)
+
+p1b <- ggplot(df1, aes(x = carrier, y = arr_delay)) +
+    geom_boxplot() + 
+    stat_summary(fun.y = mean, geom = "point", shape = 18, size = 3) +
+    labs(title = "Boxplot of Arrival Delay by Carrier", x = "Carrier", y = "Arrival Delay")
+    
+
+ggplotly(p1b)
+```
+
+| Carrier | Mean Arrival Delay |
+|:--------:|:-------------------:|
+| AA | 2.978 |
+| DL | 5.112 |
+| UA | 7.599 |
+
+United airlines had the highest average arrival delay, followed by Delta, and then American.
+
+### Problem 1.c
+Create a pie chart for the 3 carriers where the percentages are the proportions of observations and where percentages are superimposed on the sectors of the pie chart.
