@@ -1,5 +1,5 @@
 ---
-title: "visualization basics"
+title: "visualization notes"
 date: today
 format:
     html:
@@ -246,3 +246,78 @@ ggplotly(p3)
 A bar plot represents a quantity of interest via the height of a bar.  
 
 ```{r label="barplot"}
+#| code-fold: true
+p4 <- ggplot(mpg1) + 
+  geom_bar(aes(x = class, y = hwy, fill = drv), stat = "identity", position = "dodge") +
+  theme_bw()
+
+p4
+```
+
+:::{.callout-note} 
+Notice how `2seater` only has one bar. This is because in the dataset, `2seater` cars only have `r` drive.
+:::
+
+```{r label="2seater note"}
+mpg0 <- mpg1 %>% filter(class == "2seater")
+unique(mpg0$drv)
+```
+
+### Pie chart
+
+```{r label="piechart setup"}
+#| code-fold: true
+#| code-summary: "piechart setup"
+library(scales) #this library helps scale data
+mpg2 <- mpg1 %>% group_by(class) %>%
+  dplyr::count() %>% ungroup() %>%
+  mutate(percentage= `n` / sum(`n`)) %>%
+  dplyr::arrange(desc(class))
+
+mpg2$labels <- scales::percent(mpg2$percentage)
+
+mpg2
+```
+
+```{r label="piechart"}
+#| code-fold: true
+pie <- ggplot(mpg2) +
+  geom_bar(aes(x = "", y = percentage, fill = class), width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(x = 1, y = cumsum(percentage) - percentage / 2, label = labels))
+
+# geom_text adds text as labels to a plot
+# cumsum() computes the cumulative 'percentage'
+# "Labels" are used to label the proportions
+
+pie
+```
+
+- `coord_polar()` is used to create a polar coordinate system, turning the bar plot into a pie chart
+- `theme_void()` removes the background and axes
+- `geom_text()` adds text as labels to a plot
+
+# Advanced ggplot2
+
+## Faceting
+
+- A dataset can be split into subsets based on some criteria. For example, the mileage dataset `mpg` can be split into subsets based on `class` and `drv` (drive)
+
+### Two types of faceting
+
+Two types of faceting are provided by `ggplot2`:
+
+- `facet_grid()` produces a 2d grid of panels defined by variables which form the rows and columns
+- `factet_wrap()` produces a 1d ribbon of panels that is wrapped into 2d
+
+### `facet_wrap()`
+
+Basic syntax: 
+
+```r
+facet_wrap(facets, nrow = NULL, ncol = NULL, scales = "fixed", labeller = label_both, shrink = TRUE)
+```
+
+- the `facets` can be specified by `~variable` or `vars(variable)`
+- `nrow` and `ncol` specify the number of rows and columns of the facetted plot
