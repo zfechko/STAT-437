@@ -321,3 +321,68 @@ facet_wrap(facets, nrow = NULL, ncol = NULL, scales = "fixed", labeller = label_
 
 - the `facets` can be specified by `~variable` or `vars(variable)`
 - `nrow` and `ncol` specify the number of rows and columns of the facetted plot
+
+#### Illustration
+Plot `displ` vs `hwy` for each level of `class` via faceting with rowwise layout
+
+```{r}
+#| code-fold: true
+p1 <- ggplot(mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+# add faceting using class
+p2 <- p1 + facet_wrap(~class, nrow = 2)
+
+p2
+```
+
+```r
+p1 + facet_wrap(vars(class), nrow = 2)
+```
+
+is the same as 
+
+```r
+p1 + facet_wrap(~class, nrow = 2)
+```
+
+to use a columnwise layout, use `ncol` instead of `nrow`
+
+
+Plot `displ` vs `hwy`, faceting via `cyl` and `drive`
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  facet_wrap(cyl ~ drv)
+```
+
+### `facet_grid()`
+
+`facet_grid` forms a matrix of panels defined by row and column faceting variables, it's basic syntax is:
+
+```r
+facet_grid(rows = NULL, cols = NULL, scales = "fixed", labeller = "label_value")
+```
+
+#### Using `facet_grid()` with 2 variables
+```{r}
+p1 + facet_grid(. ~ drv)
+
+p1 + facet_grid(drv ~ .)
+
+p1 + facet_grid(drv ~ cyl)
+```
+
+#### Using `facet_grid()` with $\geq$ 3 variables
+
+Plot `displ` vs `hwy` faceting with `drv` and `cyl`, coloring by `class`, assigning shapes by `manufacturer`
+
+```{r}
+#| code-fold: true
+mpg1 <- mpg %>% filter(manufacturer %in% c("chevrolet", "toyota"))
+
+ggplot(mpg1, aes(x = displ, y = hwy, color = class, shape = manufacturer)) +
+  geom_point() +
+  facet_grid(drv ~ cyl)
+```

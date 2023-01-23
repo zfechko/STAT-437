@@ -9,6 +9,10 @@ format:
         theme: 
             light: flatly
             dark: darkly
+    pdf:
+        highlight-style: github
+        code-overflow: wrap
+        code-line-numbers: true
 ---
 
 ```{r setup, include=FALSE}
@@ -56,7 +60,8 @@ month.df$month <- as.factor(month.df$month)
 # create density plot
 p1a <- ggplot(month.df) +
     geom_density(mapping = aes(x = arr_delay, color = month)) +
-    labs(title = "Density Plot of Arrival Delay by Month", x = " Arrival Delay", y = "Density")
+    labs(title = "Density Plot of Arrival Delay by Month", x = " Arrival Delay", y = "Density") +
+    theme(plot.title = element_text(hjust = 0.5))
 
 p1a
 ```
@@ -72,10 +77,11 @@ In a single plot, create a boxplot for `arr_delay` for each of the 3 carriers. W
 p1b <- ggplot(carrier.df, aes(x = carrier, y = arr_delay)) +
     geom_boxplot() + 
     stat_summary(fun.y = mean, geom = "point", shape = 18, size = 3) +
-    labs(title = "Boxplot of Arrival Delay by Carrier", x = "Carrier", y = "Arrival Delay")
+    labs(title = "Boxplot of Arrival Delay by Carrier", x = "Carrier", y = "Arrival Delay") +
+    theme(plot.title = element_text(hjust = 0.5))
     
 
-ggplotly(p1b)
+p1b
 ```
 
 | Carrier | Mean Arrival Delay |
@@ -97,6 +103,7 @@ df1c <- carrier.df %>%
     dplyr::count() %>% ungroup() %>%
     mutate(percentage = n/sum(n)) %>%
     dplyr::arrange(desc(carrier))
+
 
 df1c$labels <- scales::percent(df1c$percentage)
 
@@ -122,14 +129,17 @@ df1d <- flights_sml %>%
 p1d <- ggplot(df1d, aes(x = distance, y = arr_delay)) +
     geom_point() +
     facet_grid(month ~ carrier) +
-    labs(title = "Arrival Delay vs Distance by Month and Carrier", x = "Distance", y = "Arrival Delay")
+    labs(title = "Arrival Delay vs Distance by Month and Carrier", x = "Distance", y = "Arrival Delay") +
+    theme(plot.title = element_text(hjust = 0.5))
 
 p1d
 ```
 
 
 ### Problem 1.e
-For each feasible combination of values of `month` and `carrier`, compute the sample average of `arr_delay` and save them into the variable `mean_arr_delay`, and compute the sample average of `distance` and save these averages into the variable `mean_distance`. Plot `month` against `mean_arr_delay` with `shape` designated by `carrier` and `color` designated by `mean_distance`, and plot `month` against `mean_arr_delay` with `shape` designated by `carrier` and `color` designated by `mean_distance` and annotate each point by its associated `carrier` name
+For each feasible combination of values of `month` and `carrier`, compute the sample average of `arr_delay` and save them into the variable `mean_arr_delay`, and compute the sample average of `distance` and save these averages into the variable `mean_distance`.
+
+Plot `month` against `mean_arr_delay` with shape designated by `carrier` and color by `mean_distance` and annotate each point by its associated carrier name.
 
 ```{r label="Problem 1.e"}
 df1e <- flights_sml %>%
@@ -141,9 +151,12 @@ df1e
 
 p1e <- ggplot(df1e, aes(x = month, y = mean_arr_delay, shape = carrier, color = mean_distance)) +
     geom_point() +
-    labs(title = "Mean Arrival Delay by Month and Carrier", x = "Month", y = "Mean Arrival Delay")
+    labs(title = "Mean Arrival Delay by Month and Carrier", x = "Month", y = "Mean Arrival Delay") +
+    scale_color_continuous(name = "Mean Distance") +
+    geom_text(aes(label = carrier), nudge_x = 0.5) +
+    theme(plot.title = element_text(hjust = 0.5))
 
-ggplotly(p1e)
+p1e
 ```
 
 ## Problem 2
