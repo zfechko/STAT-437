@@ -386,3 +386,42 @@ ggplot(mpg1, aes(x = displ, y = hwy, color = class, shape = manufacturer)) +
   geom_point() +
   facet_grid(drv ~ cyl)
 ```
+
+# Annotating a Plot
+
+## Two commands for annotation
+- `geom_text` adds text directly to a plot
+- `geom_label` draws a rectangle around text
+
+Basic syntax:
+```r
+geom_text(mapping = NULL, data = NULL, parse = FALSE, inherit.aes = TRUE)
+
+geom_label(mapping = NULL, data = NULL, parse = FALSE, inherit.aes = TRUE)
+```
+
+## `geom_label()`
+
+plot `displ` vs `hwy` and annotate each pair of observations from (displ, hwy) by `cyl` type
+
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_label(aes(label = cyl), nudge_x = 0.05)
+```
+
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_label(aes(label = cyl, color = class), nudge_x = 0.05)
+```
+
+## `geom_text()`
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_text(aes(label = cyl), nudge_x = 0.05)
+```
