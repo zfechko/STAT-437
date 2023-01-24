@@ -1,0 +1,9 @@
+---
+title: "HW 2"
+author: "Zach Fechko"
+date: today
+    html:
+        mono_font: "Fira Code"
+        highlight-style: github
+        default-image-extension: svg
+---
