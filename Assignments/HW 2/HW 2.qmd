@@ -2,8 +2,136 @@
 title: "HW 2"
 author: "Zach Fechko"
 date: today
+format:
     html:
         mono_font: "Fira Code"
         highlight-style: github
-        default-image-extension: svg
+        code-overflow: wrap
+        embed-resources: true
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, dev="svg")
+```
+
+# Problem 1
+
+```{r label="imports", message=FALSE}
+library(nycflights13)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+```
+
+```{r label="data setup"}
+# months 12, 1, 7, 8
+# carriers UA, AA, DL
+# distance > 700
+flights_sml <- flights %>%
+  filter(month %in% c(12, 1, 7, 8) & carrier %in% c("UA", "AA", "DL") & distance > 700)
+```
+
+## Problem 1.a
+For each combination of the values of `carrier` and `month`, obtain the average `arr_delay` and obtain the `average distance`. Plot the average arr_delay against the average distance, use `carrier` as facet; add a title “Base plot” and center the title in the plot. This will be your base plot, say, as object p. Show the plot p
+
+```{r label="1.a"}
+df1a <- flights_sml %>%
+  group_by(carrier, month) %>%
+  summarise(avg_arr_delay = mean(arr_delay, na.rm = TRUE), avg_distance = mean(distance, na.rm = TRUE))
+
+df1a
+
+p <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
+  geom_point() +
+  facet_wrap(~carrier) +
+  labs(title = "Base Plot", x = "Average Distance", y = "Average Arrival Delay") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p
+```
+
+## Problem 1.b
+Modify `p` as follows to get plot `p1`:  
+
+- connect the points for each `carriers` via one type of dashed line
+- code the 3 levels of `carrier` as $\alpha_1, \beta_{1, 2},$ and $\gamma^{[0]}$ respectively, and display them in the strip texts
+- change the legend title into "My $\zeta$" (this legend is induced when you connect points for each `carrier` by a type of line), and put the legend in horizontal direction at the bottom of the plot
+- add a title "With math expressions" and center the title in the plot
+
+```{r label="1.b"}
+b_str <- c(expression(alpha[1]), expression(beta[1][2]), expression(gamma^0))
+df1a$DF <- factor(df1a$carrier, labels = b_str)
+
+#p1 <- p + geom_line(aes(group = carrier, linetype = carrier)) +
+#  facet_wrap(~DF, labeller = label_parsed) +
+#  theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = #element_text(expression(My~zeta)))
+
+p1 <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
+  geom_point() +
+  geom_line(aes(group = carrier, linetype = carrier)) +
+  facet_wrap(~DF, labeller = label_parsed) +
+  labs(title = "With math expressions", x = "Average Distance", y = "Average Arrival Delay", linetype = expression(My~zeta)) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "bottom", legend.direction = "horizontal") +
+  scale_linetype_discrete(labels = b_str)
+
+p1
+```
+
+:::{.callout-note}
+I need to figure out how to change the strip text without having to create a whole new plot
+:::
+
+## Problem 1.c
+Modify `p1` as follows to get plot `p2`:
+
+- set the font size of the strip text to 12 and rotate the strip text counterclockwise by 15 degrees
+- set the font size of the x axis text to be 10 and rotate the x axis text clockwise by 30 degrees
+- set the x axis label as "$\hat{\mu}$ for mean arrival delay"
+- Add a title "with front and text adjustments" and center the title in the plot
+
+```{r label="1.c"}
+p2 <- p1 +
+  theme(strip.text = element_text(size = 12, angle = -15),
+        axis.text.x = element_text(size = 10, angle = 30),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = expression(hat(mu)~"for mean arrival delay"), title = "with front and text adjustments")
+
+p2
+```
+
+# Problem 2
+This problem requires you to visualize the binary relationship between members of a karate club as an undirected graph. Create a graph for `karate`. Once you obtain the graph, you will see each vertex is annotated by a number or letter. What do the numbers or letters refer to? Do you see the subgraphs of the graph? If so, what do they mean?
+
+```{r label="2", warning=FALSE}
+library(igraphdata)
+library(igraph)
+data(karate)
+vertex.attributes(karate)
+
+legend_df <- data.frame(attr = unique(vertex_attr(karate, "Faction")), color = unique(V(karate)$color))
+legend_df <- legend_df[order(legend_df$attr), c(1, 2)]
+
+plot.igraph(karate)
+
+legend(x = "topright", legend = legend_df$attr, col = c("orange", "skyblue"), title = "Faction", bty = "n", pch = 19)
+```
+
+
+According to the graph and looking at the vertex attributes. The numbers in each vertex refer to an identifier for each person/"actor" in the club. As you can see from the call of `vertex.attributes(karate)`, there are names like "Mr Hi", "Actor 1", "Actor 2", etc. and they have labels of "H", "2", "3", etc. There are two distinct subgraphs in the graph, and they represent the two "factions" the developed when the karate club split into two seperate clubs and who is a part of them, the one led by John A ("A" in the graph) in blue, and the other led Mr. Hi ("H in the graph") in orange.
+
+# Problem 3
+This problem requires you to create an interactive plot using `plotly`
+
+Create an interactive scatter plot between `hwy` and `displ` with the following:  
+
+- `color` by `cyl`
+- x-axis label as "engine displacement in liters" and y-axis label as "highway miles per gallon"
+- legend title as "number of cylinders" and adjust the vertical position of the legend if you can
+
+
+```{r label="3"}
+p3 <- plot_ly(mpg, x = ~displ, y = ~hwy, color = ~cyl, type = "scatter", mode = "markers") %>%
+  layout(xaxis = list(title = "engine displacement in liters"), yaxis = list(title = "highway miles per gallon"), legend = list(title = "number of cylinders", y = 100))
+p3
+```
