@@ -1,0 +1,594 @@
+---
+title: "Advanced GGPlot2"
+date: today
+format:
+    html:
+        monofont: "Fira Code"
+        highlight-style: github
+        code-overflow: wrap
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(plotly)
+```
+
+
+## Faceting
+
+- A dataset can be split into subsets based on some criteria. For example, the mileage dataset `mpg` can be split into subsets based on `class` and `drv` (drive)
+
+### Two types of faceting
+
+Two types of faceting are provided by `ggplot2`:
+
+- `facet_grid()` produces a 2d grid of panels defined by variables which form the rows and columns
+- `factet_wrap()` produces a 1d ribbon of panels that is wrapped into 2d
+
+### `facet_wrap()`
+
+Basic syntax: 
+
+```r
+facet_wrap(facets, nrow = NULL, ncol = NULL, scales = "fixed", labeller = label_both, shrink = TRUE)
+```
+
+- the `facets` can be specified by `~variable` or `vars(variable)`
+- `nrow` and `ncol` specify the number of rows and columns of the facetted plot
+
+#### Illustration
+Plot `displ` vs `hwy` for each level of `class` via faceting with rowwise layout
+
+```{r}
+#| code-fold: true
+p1 <- ggplot(mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+# add faceting using class
+p2 <- p1 + facet_wrap(~class, nrow = 2)
+
+p2
+```
+
+```r
+p1 + facet_wrap(vars(class), nrow = 2)
+```
+
+is the same as 
+
+```r
+p1 + facet_wrap(~class, nrow = 2)
+```
+
+to use a columnwise layout, use `ncol` instead of `nrow`
+
+
+Plot `displ` vs `hwy`, faceting via `cyl` and `drive`
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  facet_wrap(cyl ~ drv)
+```
+
+### `facet_grid()`
+
+`facet_grid` forms a matrix of panels defined by row and column faceting variables, it's basic syntax is:
+
+```r
+facet_grid(rows = NULL, cols = NULL, scales = "fixed", labeller = "label_value")
+```
+
+#### Using `facet_grid()` with 2 variables
+```{r}
+p1 + facet_grid(. ~ drv)
+
+p1 + facet_grid(drv ~ .)
+
+p1 + facet_grid(drv ~ cyl)
+```
+
+#### Using `facet_grid()` with $\geq$ 3 variables
+
+Plot `displ` vs `hwy` faceting with `drv` and `cyl`, coloring by `class`, assigning shapes by `manufacturer`
+
+```{r}
+#| code-fold: true
+mpg1 <- mpg %>% filter(manufacturer %in% c("chevrolet", "toyota"))
+
+ggplot(mpg1, aes(x = displ, y = hwy, color = class, shape = manufacturer)) +
+  geom_point() +
+  facet_grid(drv ~ cyl)
+```
+
+# Annotating a Plot
+
+## Two commands for annotation
+- `geom_text` adds text directly to a plot
+- `geom_label` draws a rectangle around text
+
+Basic syntax:
+```r
+geom_text(mapping = NULL, data = NULL, parse = FALSE, inherit.aes = TRUE)
+
+geom_label(mapping = NULL, data = NULL, parse = FALSE, inherit.aes = TRUE)
+```
+
+## `geom_label()`
+
+plot `displ` vs `hwy` and annotate each pair of observations from (displ, hwy) by `cyl` type
+
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_label(aes(label = cyl), nudge_x = 0.05)
+```
+
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_label(aes(label = cyl, color = class), nudge_x = 0.05)
+```
+
+## `geom_text()`
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_text(aes(label = cyl))
+```
+
+# Part 2
+
+## `annotate()`
+
+`annotate()` adds geometric objects to a plot. But unlike a typical `geom` function, properties of the annotation are not mapped to variables in the data. Instead they are passed in as vectors
+
+```{r}
+p = ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+
+# add annotation "some text" at (2, 25), (3, 25), (4, 25), (5, 25)
+
+p + annotate("text", x = 2:5, y = 25, label = "some text")
+```
+
+Example 2: add a rectangle via "rect" whose size is determined by `xmin` `xmax` `ymin` `ymax`
+
+```{r}
+p + annotate("rect", xmin = 3, xmax = 4.2, ymin = 12, ymax = 20, alpha = 0.2)
+```
+
+`alpha` controls the opacity of the the annotation
+
+### parsing text
+
+plot `displ` vs `hwy` and add a math expression as annotation
+
+```{r}
+p + annotate("text", x = 4, y = 40, label = "italic(R) ^ 2 == 0.75", parse = TRUE)
+```
+
+`parse` converts the string `italic(R) ^ 2 == 0.75` into a math expression
+
+# Adjusting scales
+
+## Four categories of scales
+
+- "position scales" are used to map continuous and discrete variables onto the plotting region
+- "color scales" are used to map continuous and discrete variables onto color
+- "manual scales" are used to map discrete variables to a user's choice of symbol size, line type, shape, or color, and create the corresponding legend
+- "the identity scale" is used to plot variable values directly to the aesthetic rather than mapping them to some other aesthetics
+
+### Position scales
+
+```r
+#set ranges for both x and y axis
+lims(...)
+
+# set range for x axis
+xlim(...)
+
+# set range for y axis
+ylim(...)
+```
+
+```{r}
+p <- ggplot(mpg, aes(x = cty, y = hwy, color=class)) + geom_point()
+p
+```
+
+use `xlim(c(NA,20))` to set an automatic lower limit
+
+```{r}
+p + xlim(c(NA, 20))
+```
+
+### `scale_*_continuous()`
+
+this function controls the x or y axis for continuous variables and often sets breaks, labels, na.value, and/or trans:
+
+- breaks: a numberic vector of tick positions
+- labels: a character vector of tick labels (must be the same length as breaks)
+- na.value=value sets missing values to value
+- trans transformations such as `scale_*_log10()`
+
+
+
+
+### `scale_*_discrete()`
+
+- controls the x or y axis for discrete variables
+is often used to set breaks, labels, na.value, and/or trans
+has syntax similar to `scale_*_continuous()`
+
+# Color Scaling
+
+## Continuous variables
+
+There are 3 methods for mapping continuous variables to color
+
+- `scale_color_gradient()`
+- `scale_color_gradient2()`
+- `scale_color_gradientn()`
+
+### Two color gradient
+
+`scale_color_gradient` and `scale_fill_gradient`:
+
+- each being a two color gradient "low-high"
+- arguements low and high control the colors at the low and high end of the gradient
+
+### Diverging color gradient
+
+`scale_color_gradient2` and `scale_fill_gradient2`:
+
+- Each being a three color gradient "low-mid-high"
+- each having a mid color for the color of midpoint
+- midpoint defaults to 0 but can be set to any value
+
+These two functions are particularly useful for creating diverging color schemes
+
+### Multiple color gradient
+
+`scale_color_gradientn` and `scale_fill_gradientn`:
+
+- each being a custom n-color gradient
+- each requiring a vector of colors in the colors argument; by default, these colors will be evenly spaced along the range of the data
+
+### Illustration
+
+```{r}
+#| code-fold: true
+#plot cty vs hwy with default scheme color = displ
+p <- ggplot(mpg) + geom_point(aes(x = cty, y = hwy, color = displ))
+p
+```
+
+#### Adjust coloring: low-mid-high
+
+```{r}
+#| code-fold: true
+p + scale_color_gradient2("Displacement", low = "gray", mid = "blue", high = "red", midpoint = mean(mpg$displ))
+```
+
+## Visualize 3D surfaces in 2D
+
+The `faithful` dataset in MASS records waiting times between eruptions in minutes of the Old Faithful geyser in Yellowstone National Park, and the durations of the eruptions in minutes.
+
+```{r, warning=FALSE}
+library(MASS)
+head(faithful)
+```
+
+Density function $z = f(x, y)$ for $(x,y) =$ (eruptions, waiting) can be visualized via 2D contours
+
+### Obtain estimated density
+
+Obtain density estimate for (`eruptions`, `waiting`)
+
+- load library `MASS`, apply `kde2d` (2d kernel density estimation) to `faithful` dataset
+- dataframe `f2d` has 3 columnns, `x`, `y`, `z`, where `z` is the density estimate
+
+```{r}
+f2d <- with(faithful, kde2d(eruptions, waiting), h = c(1, 10), n = 50)
+df <- with(f2d, cbind(expand.grid(x, y), as.vector(z)))
+names(df) <- c("eruptions", "waiting", "density")
+head(df)
+```
+
+### Visualize density
+
+```{r}
+#| code-fold: true
+erupt <- ggplot(df, aes(waiting, eruptions, fill = density)) +
+    geom_tile() +
+    scale_x_continuous("Waiting time (min)", expand = c(0, 0)) +
+    scale_y_continuous("Eruption time (min)", expand = c(0, 0))
+erupt
+```
+
+Note the use of
+
+- `geom_tile()` and `fill = density`
+- `scale_x_continuous` and `scale_y_continuous` to set the axis labels and expand the axis limits
+
+#### Adjust coloring: low-high
+
+```{r}
+#| code-fold: true
+erupt + scale_fill_gradient(limits = c(0, 0.04), low = "white", high = "black")
+```
+
+#### Adjust coloring: low-mid-high
+
+```{r}
+#| code-fold: true
+erupt + scale_fill_gradient2(limits = c(0, 0.04), midpoint = mean(df$density))
+```
+
+
+## Discrete variables
+
+### Overview
+
+Two methods for color scales for discrete variables:
+
+- choosing evenly spaced colors from the color wheel using `scale_color_hue()` (works well for up to 8 colors)
+- Selecting colors from hand-picked sets via things like `RColorBrewer`
+
+we're going to use the `msleep` dataset for these illustrations
+```{r}
+head(msleep)
+```
+
+### Illustration
+
+Plot `brainwt` vs `bodywt` and color "point" by `vore`
+
+```{r}
+#| code-fold: true
+p <- ggplot(msleep) +
+  geom_point(aes(brainwt,bodywt, color = vore)) +
+  scale_x_continuous(trans="log") +
+  scale_y_continuous(trans="log")
+
+p
+```
+
+#### Adjust coloring by `brewer`
+
+```{r}
+#| code-fold: true
+p + scale_color_brewer(palette = "Set1")
+```
+
+# Adjusting guides, font sizes, and mathematical expressions
+
+## Adjusting legends
+
+Brief syntax:
+```r
+theme(
+  #legend position: right, left, bottom, top, none (default: right)
+  legend.position = "right",
+
+  #legend background
+  legend.background = element_rect(fill, color, size, linetype),
+
+  #legend direction and justification
+  #i.e. the layout of items in legends (horizontal, vertical)
+  #default: vertical
+  legend.direction = NULL,
+
+  #legend box
+  #arrangement of multiple legends (horizontal, vertical)
+  legend.box = NULL
+)
+```
+
+### Illustration
+
+Plot `displ` vs `hwy` with `shape=drv`
+
+```{r}
+#| code-fold: true
+p <- ggplot(mpg, aes(displ, hwy, shape = drv)) + geom_point()
+p
+```
+
+#### Adjust legend position
+
+```{r}
+#| code-fold: true
+p + theme(legend.position = "top", legend.direction = "horizontal")
+```
+
+#### Remove legend
+
+```{r}
+#| code-fold: true
+p + theme(legend.position = "none")
+```
+
+#### Remove fill for `key`
+
+```{r}
+#| code-fold: true
+p + theme(legend.key = element_blank()) #may result in spacing issues
+```
+
+#### Legend text and title:
+```r
+theme(
+  legend.text = element_text(size = NULL)
+  legend.title = element_text(size = NULL)
+)
+```
+
+```{r}
+#| code-fold: true
+p <- p + aes(color = cyl)
+```
+
+#### Axis label and strip text
+
+```r
+theme(
+  axis.text.x = element_text(size = 10, angle=0)
+  axis.title.x = element_text(size = 14, angle = 30)
+  axis.text.y = element_text(size = 10, angle = 0)
+  axis.title.y = element_text(size = 14, angle = 30)
+)
+```
+
+## Mathematical Expressions
+
+### Creating a mathematical expression
+
+we will use:
+
+```r
+paste(..., sep = "")
+```
+to create a string that contains `plotmath` syntax/commands, and  
+
+```r
+expression(...)
+```
+to create a mathematical expression
+
+### Plotmath syntax
+
+`plotmath` shares some syntax/commands with LaTeX. For example:
+
+- `alpha`...`omega` for $\alpha \ldots \omega$
+- `x[y]` for $x_y$ and `x[y][z]` for $x_{yz}$
+- `x^y` for $x^y$
+
+### `paste`
+
+```{r}
+paste("x", "trial", sep = "")
+
+paste("x", "trial", sep = " ")
+```
+
+
+### `expression`
+
+```{r}
+s1 = expression(paste("the square root of 2 is ", sqrt(2), sep = ""))
+
+s2 = expression(paste("double subscript ", x[1][2], sep = " "))
+
+d1 <- data.frame(cbind(1:10, 1:10)); names(d1) <- c("x1", "y2")
+ggplot(d1, aes(x1, y2)) + geom_point() + xlab(s1) + ylab(s2)
+```
+
+### Math expressions in legends
+plot `displ` vs `hwy` with `color = drv`
+
+```{r}
+p <- ggplot(mpg, aes(displ, hwy, color = drv)) + geom_point()
+```
+
+- map the 3 levels `4`, `f`, and `r` to $\alpha_1$, $\beta^2$, and r
+- use $\alpha_1$, $\beta^2$, and r as key labels for the legend created by the `color` aesthetic
+- change the legend title to "Legend $\zeta$"
+
+```{r}
+#| code-fold: true
+drvStg <- c(expression(alpha[1]), expression(beta[2]), expression(r))
+
+#modify legend title
+p2c <- p + labs(col=expression(paste("Legend ", zeta))) +
+  scale_color_discrete(labels = drvStg)
+
+p2c
+```
+
+### Math expressions in strip texts
+
+```{r}
+#| code-fold: true
+p <- ggplot(mpg, aes(displ, hwy)) + geom_point() + facet_wrap(~drv)
+p
+```
+
+- map 4, f, and r to $\alpha_1$, $\beta^2$, and r
+- create variable `DF` (a factor) with levels $\alpha_1$, $\beta^2$, and r
+- use `slice` to check correctness of mapping
+
+```{r}
+#| code-fold: true
+
+drvStg <- c(expression(alpha[1]), expression(beta^2), expression(r))
+
+mpg$DF <- factor(mpg$drv, labels = drvStg)
+
+mpg %>% select(displ, hwy, DF, drv) %>% group_by(drv) %>% slice(1)
+```
+
+Create plot and  
+
+- use `labeller = label_parsed` to parse expressions, which are levels of `DF`
+- use parsed expressions as strip texts for `facet_wrap` with DF:
+
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(displ, hwy)) + geom_point() +
+  facet_wrap(~DF, labeller = label_parsed)
+```
+
+### Parse expressions in strip texts
+
+Math expressions in strip texts of `facet_grid`
+
+- map 4, 5, 6, and 8 levels of `cyl` to $\gamma_1$, $5^2$, 6, and 8
+- create `CF` (a factor) with levels $\gamma_1$, $5^2$, 6, and 8
+
+```{r}
+cylStr <- c(expression(gamma[1]), expression(5^2), "6", "8")
+mpg$CF <- factor(mpg$cyl, labels = cylStr)
+
+mpg %>% select(displ, hwy, CF, cyl) %>% group_by(cyl) %>% slice(1)
+```
+
+
+Create plot
+```{r}
+#| code-fold: true
+ggplot(mpg, aes(displ, hwy)) + geom_point() +
+  facet_grid(CF ~ DF, labeller = label_parsed)
+```
+
+```{r}
+#parse expression for CF only
+ggplot(mpg, aes(displ, hwy)) + geom_point() +
+  facet_grid(CF ~ DF, labeller = labeller(CF = label_parsed))
+```
+
+# A few other ggplot tricks
+
+## `geom_+scale*manual`
+
+Manually specify shapes and line types:
+
+```{r}
+p5 <- ggplot(mpg, aes(cty, hwy)) + facet_wrap(~cyl) +
+  geom_point(aes(shape = drv, color = drv), size = 1.2) +
+  scale_shape_manual(values = c(2, 1, 4)) +
+  geom_line(aes(linetype = drv), linewidth = 0.3) +
+  scale_linetype_manual(values = rep("dotted", 3)) +
+  theme_bw()
+
+p5
+```
+
+## Combine ggplot2 plots
+
+The packages `grid` and `gridExtra` can be used to combine two or more plots
+
