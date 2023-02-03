@@ -1,0 +1,20 @@
+---
+title: "Other visualization techniques"
+format:
+    html:
+        embed-resources: true
+        highlight-style: github
+        code-overflow: wrap
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+We will cover
+
+- visualizing data with geographical information
+- visualizing network data (graphs)
+- visualizing tree-like structures
+- dynamic visualization

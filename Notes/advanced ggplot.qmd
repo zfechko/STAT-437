@@ -6,6 +6,7 @@ format:
         monofont: "Fira Code"
         highlight-style: github
         code-overflow: wrap
+        embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
@@ -529,7 +530,7 @@ drvStg <- c(expression(alpha[1]), expression(beta^2), expression(r))
 
 mpg$DF <- factor(mpg$drv, labels = drvStg)
 
-mpg %>% select(displ, hwy, DF, drv) %>% group_by(drv) %>% slice(1)
+#mpg %>% select(displ, hwy, DF, drv) %>% group_by(drv) %>% slice(1)
 ```
 
 Create plot and  
@@ -554,7 +555,7 @@ Math expressions in strip texts of `facet_grid`
 cylStr <- c(expression(gamma[1]), expression(5^2), "6", "8")
 mpg$CF <- factor(mpg$cyl, labels = cylStr)
 
-mpg %>% select(displ, hwy, CF, cyl) %>% group_by(cyl) %>% slice(1)
+#mpg %>% select(displ, hwy, CF, cyl) %>% group_by(cyl) %>% slice(1)
 ```
 
 
@@ -592,3 +593,17 @@ p5
 
 The packages `grid` and `gridExtra` can be used to combine two or more plots
 
+```{r}
+# create 2 plots
+p1 <- ggplot(mpg, aes(cty, hwy)) + geom_point()
+p2 <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+# combine plots
+library(gridExtra)
+grid.arrange(p1, p2, nrow = 1)
+```
+
+# Other things
+
+- some statistical transformations `stat_XXX`
+- figure margin adjustment `margin`

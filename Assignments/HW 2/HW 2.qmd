@@ -63,9 +63,6 @@ Modify `p` as follows to get plot `p1`:
 b_str <- c(expression(alpha[1]), expression(beta[1][2]), expression(gamma^0))
 df1a$DF <- factor(df1a$carrier, labels = b_str)
 
-#p1 <- p + geom_line(aes(group = carrier, linetype = carrier)) +
-#  facet_wrap(~DF, labeller = label_parsed) +
-#  theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = #element_text(expression(My~zeta)))
 
 p1 <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
   geom_point() +
@@ -78,9 +75,6 @@ p1 <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
 p1
 ```
 
-:::{.callout-note}
-I need to figure out how to change the strip text without having to create a whole new plot
-:::
 
 ## Problem 1.c
 Modify `p1` as follows to get plot `p2`:
@@ -118,7 +112,7 @@ legend(x = "topright", legend = legend_df$attr, col = c("orange", "skyblue"), ti
 ```
 
 
-According to the graph and looking at the vertex attributes. The numbers in each vertex refer to an identifier for each person/"actor" in the club. As you can see from the call of `vertex.attributes(karate)`, there are names like "Mr Hi", "Actor 1", "Actor 2", etc. and they have labels of "H", "2", "3", etc. There are two distinct subgraphs in the graph, and they represent the two "factions" the developed when the karate club split into two seperate clubs and who is a part of them, the one led by John A ("A" in the graph) in blue, and the other led Mr. Hi ("H in the graph") in orange.
+According to the graph and looking at the vertex attributes. The numbers in each vertex refer to an identifier for each person/"actor" in the club. As you can see from the call of `vertex.attributes(karate)`, there are names like "Mr Hi", "Actor 1", "Actor 2", etc. and they have labels of "H", "2", "3", etc. There are two distinct subgraphs in the graph, and they represent the two "factions" that formed when the karate club split into two seperate clubs and who is a part of each one, the one led by John A ("A" in the graph) in blue, and the other led Mr. Hi ("H in the graph") in orange.
 
 # Problem 3
 This problem requires you to create an interactive plot using `plotly`
@@ -131,7 +125,11 @@ Create an interactive scatter plot between `hwy` and `displ` with the following:
 
 
 ```{r label="3"}
-p3 <- plot_ly(mpg, x = ~displ, y = ~hwy, color = ~cyl, type = "scatter", mode = "markers") %>%
-  layout(xaxis = list(title = "engine displacement in liters"), yaxis = list(title = "highway miles per gallon"), legend = list(title = "number of cylinders", y = 100))
+p3 <- plot_ly(mpg, x = ~displ, y = ~hwy, color = ~cyl, type = "scatter", mode="markers") %>%
+  layout(xaxis = list(title = "engine displacement in liters"), yaxis = list(title = "highway miles per gallon"))
+
+p3 <- p3 %>%
+  layout(legend=list(title="number of cylinders"))
+
 p3
 ```
