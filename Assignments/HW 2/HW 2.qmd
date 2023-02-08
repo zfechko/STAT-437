@@ -42,7 +42,7 @@ df1a <- flights_sml %>%
 
 df1a
 
-p <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
+p <- ggplot(df1a, aes(x = avg_arr_delay, y = avg_distance)) +
   geom_point() +
   facet_wrap(~carrier) +
   labs(title = "Base Plot", x = "Average Distance", y = "Average Arrival Delay") +
@@ -64,7 +64,7 @@ b_str <- c(expression(alpha[1]), expression(beta[1][2]), expression(gamma^0))
 df1a$DF <- factor(df1a$carrier, labels = b_str)
 
 
-p1 <- ggplot(df1a, aes(x = avg_distance, y = avg_arr_delay)) +
+p1 <- ggplot(df1a, aes(x = avg_arr_delay, y = avg_distance)) +
   geom_point() +
   geom_line(aes(group = carrier, linetype = carrier)) +
   facet_wrap(~DF, labeller = label_parsed) +
@@ -132,4 +132,16 @@ p3 <- p3 %>%
   layout(legend=list(title="number of cylinders"))
 
 p3
+
+#this plot is another version of the above but uses ggplotly
+p3a <- ggplot(mpg, aes(x = displ, y = hwy, color = cyl)) +
+  geom_point() +
+  labs(x = "engine displacement in liters", y = "highway miles per gallon", color = "number of cylinders") +
+  theme(legend.justification = c(0, 1), legend.position = c(0.025,0.975))
+
+ggplotly(p3a)
 ```
+
+:::{.callout-note}
+I have both versions in here because using `plot_ly` I can't change the legend title, and `ggplotly` doesn't allow me to change the legend position.
+:::
