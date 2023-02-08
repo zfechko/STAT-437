@@ -11,10 +11,139 @@ format:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(igraph)
+library(ggdendro)
+library(ggmap)
+library(gganimate)
+```
+
 # Overview
 We will cover
 
 - visualizing data with geographical information
-- visualizing network data (graphs)
+- visualizing network data (similar to python's `networkx`)
 - visualizing tree-like structures
 - dynamic visualization
+
+# `ggmap`
+
+```{r}
+#get the stamen map of pullman, wa
+map <- get_stamenmap(bbox = c(-117.1670, 46.7350, -117.12, 46.75), zoom = 15, maptype = "toner-lite")
+
+ggmap(map)
+```
+
+# `igraph`
+
+## The dataset
+- the dataset contains relationships among several media outlets, if one is referenced by `mention` or `hyperlink` then they are "connected"
+
+```{r}
+nodes <- read.csv(file ='data/Dataset1-Media-Example-NODES.csv', header = T, as.is = T)
+
+edges <- read.csv("data/Dataset1-Media-Example-EDGES.csv", header = T, as.is = T)
+
+head(nodes)
+```
+
+## Create `igraph` object
+- `directed = T` creates a digraph
+- note `d = links, vertices = nodes` and "media" in `net`
+
+```{r}
+net <- graph_from_data_frame(d = edges, vertices = nodes, directed = T)
+net
+```
+
+## Create graph
+Two sub-networks; wall street journal (has the most edges)
+
+```{r}
+#| code-fold: true
+#remove multiple edges and loops
+net1 <- simplify(net, remove.multiple = T, remove.loops = T)
+plot(net1, edge.arrow.size = 0.4, edge.color = "grey", vertex.label = V(net)$media, vertex.label.color = "black")
+```
+
+# `ggdendro`
+
+```{r}
+head(USArrests)
+```
+
+```{r}
+#| code-fold: true
+hc <- hclust(dist(USArrests), "ave") #clustering
+ggdendrogram(hc, rotate = T) #rotate the dendrogram by 90 degrees
+```
+
+# Dynamic visualizations
+
+- Interactive visualizations allow a user to interact with a plot
+- usually presents relationships between specific features of data as other features change
+- `plotly` creates interactive plots and `gganimate` creates animated plots
+
+## `plotly`
+
+:::{.callout-important}
+In order to take a screenshot of a `plotly` plot, we use the library `webshot` and `phantomjs`
+
+```r
+install.packages("webshot")
+webshot::install_phantomjs()
+```
+:::
+
+### Plotting
+
+#### Example 1
+```{r}
+#| code-fold: true
+p <- plot_ly(iris, x = ~Petal.Length, y = ~Petal.Width, color = ~Species, type = "scatter", mode = "markers") %>%
+    layout(xaxis = list(title = "Petal Length"), yaxis = list(title = "Petal Width"))
+
+library(shiny)
+div(p)
+```
+
+#### Example 2
+```{r}
+#| code-fold: true
+p1 <- plot_ly(midwest, x = ~percollege, color = ~state, type = "box") %>%
+    layout(xaxis = list(title = "percent of educated population"))
+
+p1
+```
+
+### Screenshot
+
+```r
+library(htmlwidgets)
+htmlwidgets::saveWidget(p1, "p1.html", selfcontained = F)
+```
+
+## `gganimate`
+
+```{r}
+#| code-fold: true
+library(gapminder)
+library(gganimate)
+library(gifski)
+
+
+ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year) +
+  ease_aes('linear')
+```
