@@ -125,23 +125,12 @@ Create an interactive scatter plot between `hwy` and `displ` with the following:
 
 
 ```{r label="3"}
-p3 <- plot_ly(mpg, x = ~displ, y = ~hwy, color = ~cyl, type = "scatter", mode="markers") %>%
-  layout(xaxis = list(title = "engine displacement in liters"), yaxis = list(title = "highway miles per gallon"))
+mpg$cyl <- as.factor(mpg$cyl)
+df <- as.data.frame(mpg)
 
-p3 <- p3 %>%
-  layout(legend=list(title="number of cylinders"))
+p3 <- plot_ly(df, x = ~displ, y = ~hwy, color = ~cyl, type = "scatter", mode="markers") %>%
+  layout(xaxis = list(title = "engine displacement in liters"), yaxis = list(title = "highway miles per gallon")) %>%
+  layout(legend=list(title=list(text='<b> # of cylinders </b>'), x = 100, y = 0.5))
 
 p3
-
-#this plot is another version of the above but uses ggplotly
-p3a <- ggplot(mpg, aes(x = displ, y = hwy, color = cyl)) +
-  geom_point() +
-  labs(x = "engine displacement in liters", y = "highway miles per gallon", color = "number of cylinders") +
-  theme(legend.justification = c(0, 1), legend.position = c(0.025,0.975))
-
-ggplotly(p3a)
 ```
-
-:::{.callout-note}
-I have both versions in here because using `plot_ly` I can't change the legend title, and `ggplotly` doesn't allow me to change the legend position.
-:::
