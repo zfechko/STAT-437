@@ -1,0 +1,115 @@
+---
+title: "Lecture notes 3"
+format: 
+    html:
+        highlight-style: github
+        mono-font: "Fira Code"
+        embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Clustering
+
+## Motivation
+Clustering is widely applied
+
+- Marketing: consumers can be split into groups for better product positioning
+- Medicine: antibiotics can be split into groups
+
+::: {.callout-tip}
+## In essence
+Clustering is often used in exploratory data analysis or as a starting point of further study
+:::
+
+## Basic Principle
+
+In general, *clustering* refers to a broad set of techniques for finding or subgroups or clusters in a dataset
+
+In principle, lustering divides data into groups, such that:  
+
+- Observations within a group are similar to each other
+- Observations from different groups are dissimilar
+
+## Two types of clustering
+
+1. K-means clustering
+2. Hierarchical clustering
+
+### K-means clustering
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+head(iris)
+```
+
+- Features: $x_1 =$ Sepal.Length, $x_2 =$ Sepal.Width, $x_3 =$ Petal.Length, $x_4 =$ Petal.Width
+- Feature vector: $x = (x_1, x_2, x_3, x_4)$, a 4-dimensional vector, dimension = 4
+- Observation $i$ for $x: x_i = (x_{i1}, x_{i2}, x_{i3}, x_{i4})$
+    - e.g. $x_1 = (5.1, 3.5, 1.4, 0.2)$
+
+#### Euclidian distance
+The euclidian distance between two points $x_i = (x_{i1}, \ldots, x_{ip})$ and $x_j = (x_{j1}, \ldots, x_{jp})$ is defined as
+
+$$d(x_i, x_j) = \sqrt{\sum_{k=1}^p (x_{ik} - x_{jk})^2}$$
+```{r}
+x1 <- c(5.1, 3.5, 1.4, 0.2)
+x2 <- c(4.9, 3.0, 1.4, 0.2)
+
+d = sqrt(sum((x1 - x2)^2))
+d
+```
+
+#### Dissimilarity measure
+
+The dissimilarity between two observations $x_i$ and $x_j$ is defined as
+
+$$d_{ij} = d^2 (x_i, x_j)$$
+where $d$ is the euclidian distance  
+
+smaller $d_{ij}$ means more similar and vice versa
+
+```{r}
+x1 <- c(5.1, 3.5, 1.4, 0.2)
+x2 <- c(4.9, 3.0, 1.4, 0.2)
+x3 <- c(4.7, 3.2, 1.3, 0.2)
+
+#euclidian distance between x1 and x2
+d12 = sqrt(sum((x1 - x2)^2))
+d12
+
+#dissimilarity between x1 and x2
+d12^2
+
+#euclidian distance between x1 and x3
+d13 = sqrt(sum((x1 - x3)^2))
+d13
+
+#dissimilarity between x1 and x3
+d13^2
+```
+
+#### Clustering as mapping
+
+$K$-means clustering divides observations into $K$ disjoint clusters and assigns each observation to a cluster
+
+- When $K = 2$, each observation is assigned to one of two clusters
+- Let $k = 1$ or $2$ denote the cluster membership of an observation
+
+Clustering can be regardd as a mapping $C$ that assigns the $i^{th}$ observation $x_i$ to cluster $k$. However, how the clusters are numbered is arbitrary as long as there are $K$ disjoint clusters.
+
+#### Centroids and variability
+- Let $N_k$ be the number of observations in cluster $k$
+- The centroid of cluster $k$ is defined as
+$$\bar{x}_k = \frac{1}{N_k} \sum_{x_i \in C_k} x_i$$
+
+::: {.callout-note}
+The centroid for cluster $k$ is the mean of all observations in cluster $k$
+:::
+
+- The **sample variance** of each observation in cluster $k$ is defined as
+$$S_k^2 = \frac{1}{N_k} \sum_{x_i \in C_k} d^2(x_i, \bar{x}_k)$$
