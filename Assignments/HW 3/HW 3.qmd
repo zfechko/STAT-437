@@ -1,0 +1,40 @@
+---
+title: "Stat 437 -- HW 3"
+author: "Zach Fechko (011711215)"
+date: today
+format:
+    html:
+        embed-resources: true
+        highlight-style: gruvbox
+        code-overflow: wrap
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Conceptual Exercises
+
+
+# Applied Exercises
+
+```{r label="imports", message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(ggdendro)
+library(nycflights13)
+```
+
+```{r label="data"}
+# select observations from flights
+# carriers: UA, AA, DL
+# month: 7, 2
+# 4 features: dep_delay, arr_delay, air_time, distance
+
+flights_sml <- flights %>%
+    filter(carrier %in% c("UA", "AA", "DL") & month %in% c(7, 2)) %>%
+    select(carrier, month, dep_delay, arr_delay, air_time, distance)
+
+head(flights_sml)
+```
