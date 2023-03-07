@@ -5,7 +5,8 @@ date: today
 format:
     html:
         embed-resources: true
-        highlight-style: gruvbox
+        theme: pulse
+        highlight-style: github
         code-overflow: wrap
 ---
 
@@ -15,6 +16,119 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Conceptual Exercises
 
+## 1. K-Means Clustering
+
+### 1.1 Give a few examples of dissimilarity measures that can be used to measure how dissimilar two observations are. What is the main disadvantage of the squared Euclidean distance as a dissimilarity measure?
+
+
+1. Euclidean distance
+2. Squared Euclidean distance (dissimilarity measure)
+
+The main disadvantage of the squared Euclidean distance as a dissimilarity measure is that it places large influences on larger distances. This will reduce how robust the clustering algorithm is when dealing with outliers.
+
+## 1.2 Is it true that standardization of data should be done when features are measured on very different scales? Is it true that employing more features gives more accurate clustering results? Is it true that employing standardized observations gives more accurate clustering results than employing non-standardized ones? Explain each of your answers.
+
+- It is not true that standardization should be done when features are measured on very different scales. Even though it could help optimize certain algorithms, when scaling it can cause features to become dependent to each other, which could reduce the amount of convergence.
+
+- No it is not true that having more features will give more accurate clustering results. This is because it would have to depend on how the additional features relate to the other features. If you have additional features that have nothing to do with the other features, then it will not help the clustering algorithm.
+
+- No it is not true that employing standardized observations gives more accurate clustering results than employing non-standardized ones.
+
+### 1.3
+The loss function for when $K = 2$ is:
+
+$$
+W(C) = \sum_{x_i \in C_1} d^2(x_i, \bar{x}_1) + \sum_{x_i \in C_2} d^2(x_i, \bar{x}_2)
+$$
+
+the loss function is made up of the following parts:  
+
+- $W(C)$ is the quantity that we are trying to minimize
+- two summations that represent the within-cluster variability for each cluster
+- Each summation is made up of the following parts:
+    - $d^2(x_i, \bar{x}_1)$ corresponds to the squared Euclidean distance between each observation and the centroid of the cluster
+    - $\bar{x}_1$ is the centroid of the cluster
+    - $x_i$ is the observation
+
+### 1.4 What is the centroid of a cluster? Is the algorithm on page 388 of the textbook guaranteed to converge to the global minimum? What does `nstart` refer to in the `kmeans()` function? Why is it suggested to set `nstart` to a large number? Why is it suggested to set `set.seed()` before running `kmeans()`?
+
+- The centroid of a cluster is the sample mean of all the observations within that cluster.
+- Algorithm 10.1 isn't always guaranteed to converge to the global minimum because it depends on the initial cluster centers which are randomized. Once the optimal starting clusters are found, only then will it converge to the global minimum.
+- `nstart` refers to the number of random starting clusters that the algorithm will use. It is suggested to set `nstart` to a large number because it will increase the likelihood of finding the global minimum.
+- It's recommended to use `set.seed()` before running `kmeans()` because it ensures that the algorithm will produce the same results each time it is run. This is important because the initial cluster centers are random, so if the algorithm is run without `set.seed()`, the results will be different each time. An example is below
+
+```{r label="1.4"}
+#generating random data to run kmeans on
+set.seed(1)
+x <- rbind(matrix(rnorm(100), ncol = 2), matrix(rnorm(100, 3), ncol = 2))
+colnames(x) <- c("x", "y")
+
+#running kmeans with set.seed(2)
+set.seed(2)
+xx <- kmeans(x, 2)
+
+set.seed(2)
+yy <- kmeans(x, 2)
+
+#checking if the results are identical
+identical(xx, yy)
+```
+
+:::{.callout-note}
+Because the results are identical, this shows that using `set.seed()` before running `kmeans()` ensures that the algorithm will produce the same results each time it is run.
+:::
+
+### 1.5 Suppose there are 2 underlying clusters but you set the number of clusters to be different than 2 and apply `kmeans`, will you have good clustering results? Why or why not? 
+You will not have good clustering results because the clustering results depend on the number of clusters. The more clusters you add, the more centroids that will be added, which could partition the data in already existing clusters into separate clusters that could overlap, which would reduce the accuracy of the clustering results.
+
+### 1.6 Is the true number $K_0$ of clusters in data known? When using the command `clusGap` to estimate $K_0$, what does its argument `B` refer to?
+- The true number $K_0$ of clusters is unknown and has to be estimated using the gap statistic.
+- `B` refers to the number of bootstrap samples that will be used to estimate the optimal number of clusters.
+
+## 2. Hierarchical Clustering
+
+### 2.1
+Some of the advantages of hierarchical clustering are:  
+
+- It doesn't have the same disadvantages as k-means clustering such as k-means being rigid and sensitive to outliers
+- You don't have to specify the number of clusters
+- It's easy to interpret the results
+
+
+For bottom up clustering, the greater the distance in height, the more dissimilar the clusters are, and the smaller the distance in height, the more similar the clusters are.
+
+### 2.2
+- Clusters are nested at different heights because as we move up the tree from the bottom, we go from observations that are independent from each other to being grouped into courser clusters as the height increases.
+
+- These two sets of clusters will not necessarily be nested. This is because of a lack of consistency between the two criteria, this results in a tree-like structure, but it would not be nested.
+
+### 2.3
+- Distance in Pearson's correlation uses standardization, so it is not affected by the scale of the data compared to Euclidian distance. 
+
+- The definition of average linkage is the distance between pairs of observations within each cluster and then getting the average by dividing by the number of pairs
+
+- Average linkage and complete linkage are preferred over single linkage because the results tend to return more balanced and attractive dendrograms. Single linkage can give us trailing clusters
+
+### 2.4
+- `scale` can be used to scale or center the values within a given numeric matrix
+- `scale` is applied across columns, or feature vectors
+- Standardizing the observations using `scale` will give them a sample mean $\mu$ of 0 and a sample standard deviation $\sigma$ of 1
+
+### 2.5
+`hclust$height` is a set of $n - 1$ real values that represent the different dissimilarity measures between the clusters. Each height is the value of the dissimilarity measure for the correspoinding agglomeration.
+
+To get 5 clusters for a dendrogram `hc` you would first use
+
+```r
+cutree(hc, k = 5)
+```
+
+then to get the height of the cuts you would return the height of the cut tree
+
+
+
+### 2.6
+Using `ggdendrogram` allows parametric flexibility to customize the dendrogram by using `ggplot` functions/aesthetics which allows the plot to be easier to read
 
 # Applied Exercises
 
@@ -24,6 +138,7 @@ library(ggplot2)
 library(dplyr)
 library(ggdendro)
 library(nycflights13)
+library(cluster)
 ```
 
 ```{r label="data"}
@@ -31,10 +146,87 @@ library(nycflights13)
 # carriers: UA, AA, DL
 # month: 7, 2
 # 4 features: dep_delay, arr_delay, air_time, distance
+# remove na values
 
 flights_sml <- flights %>%
     filter(carrier %in% c("UA", "AA", "DL") & month %in% c(7, 2)) %>%
-    select(carrier, month, dep_delay, arr_delay, air_time, distance)
+    select(carrier, month, dep_delay, arr_delay, air_time, distance) %>%
+    na.omit()
 
 head(flights_sml)
+```
+
+
+## 3.1 K-Means Clustering
+```{r label="3.1"}
+#apply k-means clustering with k = 2 and k = 3
+#use set.seed(1) and nstart = 20
+#for K = 2, plot using clustering on month
+#for K = 3, plot using clustering on carrier
+
+set.seed(1)
+k2 <- kmeans(flights_sml[, 3:6], 2, nstart = 20)
+k3 <- kmeans(flights_sml[, 3:6], 3, nstart = 20)
+
+k2$cluster <- factor(k2$cluster)
+k3$cluster <- factor(k3$cluster)
+
+#plotting k = 2
+flights_sml$month <- factor(flights_sml$month)
+
+k2.plot <- ggplot(flights_sml, aes(x = distance, y = arr_delay,
+color = k2$cluster, shape = month)) + 
+    geom_point() +
+    labs(title = "K = 2", x = "Distance", y = "Arrival Delay") +
+    theme(plot.title = element_text(hjust = 0.5))
+k2.plot
+
+#plotting k = 3
+flights_sml$carrier <- factor(flights_sml$carrier)
+
+k3.plot <- ggplot(flights_sml, aes(x = distance, y = arr_delay, color = k3$cluster, shape = carrier)) +
+    geom_point() +
+    labs(title = "K = 3", x = "Distance", y = "Arrival Delay") +
+    theme(plot.title = element_text(hjust = 0.5))
+
+k3.plot
+```
+
+## 3.2 Hierarchical Clustering
+```{r label="3.2"}
+#use set.seed(123)
+#extract 50 random observations from flights_sml
+#apply hierarchical clustering with average linkage
+
+set.seed(123)
+flights_sml$month <- as.character(flights_sml$month)
+flights_sml$carrier <- as.character(flights_sml$carrier)
+p <- dim(flights_sml)[1]
+
+rSel <- sample(1:p, size=50, replace=FALSE)
+flights_samp <- flights_sml[rSel, ]
+head(flights_samp)
+
+carriers = flights_samp$carrier
+months = flights_samp$month
+
+ds3sd <- flights_samp[, 3:6]
+ds3sd <- t(as.matrix(ds3sd))
+temp_month <- ds3sd
+
+colnames(temp_month) <- months
+
+ds3d <- temp_month
+head(ds3d)
+
+source("Plotggdendro.r")
+
+dMat <- dist(scale((t(ds3d))))
+
+EHC_AL <- hclust(dMat, method = "average")
+ggdendrogram(EHC_AL, rotate = F)
+
+cutheight <- EHC_AL$height[length(EHC_AL$height) - 2]
+droplot <- plot_ggdendro(dendro_data_k(EHC_AL, 2), direction = "tb", heightReferece = cutheight, expand.y = 0.2)
+droplot
 ```
