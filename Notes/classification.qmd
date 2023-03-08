@@ -1,0 +1,97 @@
+---
+title: "Classification Notes"
+date: today
+format:
+    html:
+        toc: true
+        highlight-style: github
+        code-overflow: wrap
+        theme: pulse      
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Classification
+
+
+## Classification as a Task
+
+Classification is a very common and important task:
+
+- check if an email is spam or not
+- check if a tumor is malignant or benign
+- determine if a product is defective or not
+
+Classification is a more complicated task than clustering because...
+
+- classification aims to assign the *correct* group or cluster label to each observation
+- clustering only aims to assign a group to each observation, but does not care about the correctness of the assignment
+
+## Some methods of classification
+Classification methods can be approximately categorized into "model-based" and "non model-based" methods.
+
+- Model-based methods
+    - Logistic regression
+    - Linear discriminant analysis
+    - Bayesian classification
+
+- Non model-based methods
+    - k-nearest neighbors
+    - Support vector machines
+    - Decision trees
+
+## Bayes Classifier: two-class classification
+### Overview
+The Bayes classifier
+
+- employs a Bayes model that uses prior, conditional, marginal, and posterior probabilities
+- Minimizes the expected 0-1 loss and is hence optimal
+- Serves as an unattainable gold standard against which to compare other classification methods
+
+### Two group model
+The data generating process can be formulated as follows:
+
+- Let $Y_i$ denote the class label (or group membership) of the observation $x_i$ for $i = 1, \dots, n$.
+- There are two classes, i.e. $Y_i = 1$ for "class 1" or $Y_i = 2$ for "class 2", such that for some $p \in (0,1)$
+$$
+\Pr(Y_i = 1) = p, \quad \Pr(Y_i = 2) = 1 - p
+$$
+
+- If $Y_i = 1$, then $x_i \sim \text{Gaussian}(\mu_1, \Sigma_1)$, and if $Y_i = 2$, then $x_i \sim \text{Gaussian}(\mu_2, \Sigma_2)$.
+
+:::{.callout-note}
+in the example, $n = 10, p = 0.5, \mu_1 = (3,0), \mu_2 = (0, -4), \Sigma_1 = \Sigma_2 = I$
+:::
+
+### Prior and conditional distributions
+
+- $\Pr(Y_i = 1) = p$ and $\Pr(Y_i = 2) = 1 - p$ are called the *prior* probabilities of the two classes.
+- "If $Y_i = 1$ then $x_i \sim \text{Gaussian}(\mu_1, \Sigma_1)$" means "the conditional density $f_1$ of $x_i$ given $Y_i = 1$ is the gaussian density with mean vector $\mu_1$ and covariance matrix $\Sigma_1$" and is written as
+$$
+f_1(x_i | Y_i = 1) = \text{Gaussian}(x_i | \mu_1, \Sigma_1)
+$$
+
+### Marginal and posterior distributions
+
+- The marginal density of $x_i$ is
+$$
+f(x) = f_1(x | Y_i = 1) \Pr(Y_i = 1) + f_2(x | Y_i = 2) \Pr(Y_i = 2)
+$$
+
+- The posterior probability of $x_i$ belonging to class $j$, i.e. the conditional probability of $Y_i = j$ given $x_i$ is
+$$
+\Pr(Y_i = j | x_i) = \frac{f_j(x_i | Y_i = j) \Pr(Y_i = j)}{f(x_i)}
+$$
+
+### Bayes classifier
+- The Bayes classifier proposes to classify an observation to the class for which the corresponding posterior probability for the observation to belong to this class is the largest among all such posterior probabilities.
+- Namely, $x_i$ will be classified to class $\hat{j}$ if
+$$
+\hat{j} = \text{argmax}\{j \in \{1,2\}: \Pr(Y_i = j | x_i)\}
+$$
+
+:::{.callout-note}
+argmax returns the argument at which the maximum being sought is attained.
+:::

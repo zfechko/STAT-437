@@ -4,6 +4,7 @@ format:
     html:
         highlight-style: github
         mono-font: "Fira Code"
+        code-overflow: wrap
         embed-resources: true
 ---
 
@@ -33,12 +34,12 @@ In principle, lustering divides data into groups, such that:
 - Observations within a group are similar to each other
 - Observations from different groups are dissimilar
 
-## Two types of clustering
+# Two types of clustering
 
 1. K-means clustering
 2. Hierarchical clustering
 
-### K-means clustering
+# K-means clustering
 
 ```{r}
 library(tidyverse)
@@ -52,7 +53,7 @@ head(iris)
 - Observation $i$ for $x: x_i = (x_{i1}, x_{i2}, x_{i3}, x_{i4})$
     - e.g. $x_1 = (5.1, 3.5, 1.4, 0.2)$
 
-#### Euclidian distance
+### Euclidian distance
 The euclidian distance between two points $x_i = (x_{i1}, \ldots, x_{ip})$ and $x_j = (x_{j1}, \ldots, x_{jp})$ is defined as
 
 $$d(x_i, x_j) = \sqrt{\sum_{k=1}^p (x_{ik} - x_{jk})^2}$$
@@ -64,7 +65,7 @@ d = sqrt(sum((x1 - x2)^2))
 d
 ```
 
-#### Dissimilarity measure
+## Dissimilarity measure
 
 The dissimilarity between two observations $x_i$ and $x_j$ is defined as
 
@@ -93,7 +94,7 @@ d13
 d13^2
 ```
 
-#### Clustering as mapping
+## Clustering as mapping
 
 $K$-means clustering divides observations into $K$ disjoint clusters and assigns each observation to a cluster
 
@@ -102,7 +103,7 @@ $K$-means clustering divides observations into $K$ disjoint clusters and assigns
 
 Clustering can be regardd as a mapping $C$ that assigns the $i^{th}$ observation $x_i$ to cluster $k$. However, how the clusters are numbered is arbitrary as long as there are $K$ disjoint clusters.
 
-#### Centroids and variability
+## Centroids and variability
 - Let $N_k$ be the number of observations in cluster $k$
 - The centroid of cluster $k$ is defined as
 $$\bar{x}_k = \frac{1}{N_k} \sum_{x_i \in C_k} x_i$$
@@ -113,3 +114,411 @@ The centroid for cluster $k$ is the mean of all observations in cluster $k$
 
 - The **sample variance** of each observation in cluster $k$ is defined as
 $$S_k^2 = \frac{1}{N_k} \sum_{x_i \in C_k} d^2(x_i, \bar{x}_k)$$
+
+## Loss function for K-means
+- Recall cluserting, as a mapping $C$, creates clusters for which observations within a cluster are quite similar but those betwen clusters are quite dissimilar
+- Recall smaller $d(x_i, x_j)$ means more similar and vice versa
+
+It can be shown that when $K = 2$, $K$-means attempts to minimize the "loss function"
+$$W(C) = \sum_{x_i \in C_1} d^2(x_i, \bar{x}_1) + \sum_{x_i \in C_2} d^2(x_i, \bar{x}_2)$$
+
+### Interpretation of loss function
+$$W(C) = \sum_{k = 1}^K \sum_{x_i \in C_k} d^2(x_i, \bar{x}_k) = N_1 \times S_1^2 + \ldots + N_K \times S_K^2$$
+
+- each summand is the **within-cluster variability** or **within-cluster sum of squares** for the corresponding cluster (and = $N_k \times$ the sample variance of cluster $k$)
+
+::: {.callout-note}
+K-means attempts to minimize the total within-cluster variability
+:::
+
+## Algorithm for K-means
+
+$K$-means can be implemented with the following:
+
+1. Randomly assign a number from 1 to $K$ to each observation
+2. Iterate the following 2 substeps until the cluster assignments stop changing:
+    a. For each cluster, compute the cluster centroid
+    b. Assign each observation to the cluster for which the centroid is the closest in terms of Euclidian distance
+
+::: {.callout-note}
+Whe the cluster assignments stop changing, we say that the algorithm has converged
+:::
+
+## Practical Issues with K-means
+- Under any initial configuration (in terms of initial cluster memberships), the algorithm always converges to a local minimum of the loss function, even though it is **not guaranteed** to converge to the global minimum
+- Different initial configurations for the algorithm may give different clustering results when the algorithm converges
+- The algorithm needs to run under multipl einitial configurations to help get closer to the global minimum of the loss function by choosing a best initial configuration
+
+## Practical Issues with dissimilarity measure
+The previous K-means methodology employs the squared euclidian distance as dissimilarity measure. This reduces computational complexity but places large influences on large distances, thus reducing the robustness of the methodology against outliers.
+
+The squared euclidian distance is not the only dissimilarity measure that can be used.
+
+## Implementation of K-means
+
+### `kmeans()` function
+```r
+kmeans(x, centers, iter.max = 10, nstart = 1, algorithm = c("Hartigan-Wong", "Lloyd", "Forgy", "MacQueen"), trace = FALSE, ...)
+```
+
+- `x`: a matrix or data frame of observations
+- `centers`: the number of clusters
+- `iter.max`: maximum number of iterations
+- `nstart`: number of random, inital configuarations of cluster memberships
+- `algorithm`: algorithm to minimize the loss function
+
+### Example 1: Random Guassian data
+```{r}
+set.seed(2)
+x <- matrix(rnorm(50 * 2), ncol = 2)
+x[1:25, 1] <- x[1:25, 1] + 3
+x[1:25, 2] <- x[1:25, 2] - 4
+```
+- Data has $N = 50$ observations for $p = 2$ features and stored in a $50 \times 2$ matrix
+- The first 25 observations are bivariate Gaussian with mean vector $\mu_1 = (3, -4)$ and identity covariance matrix $I_2$
+- The rest are bivaraiate Gaussian with mean vector $\mu_2 = (0, 0)$ and identity covariance matrix $I_2$
+
+#### Effect of $K = 2$
+Split observations into 2 clusters
+```{r}
+km.out <- kmeans(x, 2, nstart = 20)
+
+#create new data frame with "group" and "cluster" columns
+y <- data.frame(x)
+colnames(y) <- c("x1", "x2")
+
+y$group <- factor(rep(c(1, 2), each = 25))
+y$cluster <- factor(km.out$cluster)
+
+#plot
+ggplot(y, aes(x1, x2, shape = group, color = cluster)) +
+    geom_point() +
+    labs(x = "feature 1", y = "feature 2")
+```
+
+#### Effect of $K = 3$
+Split observations into 3 clusters
+```{r}
+set.seed(4)
+km.out <- kmeans(x, 3, nstart = 20)
+
+#show the 3 centroids
+km.out$centers
+
+#create new data frame with "group" and "cluster" columns
+y <- data.frame(x)
+colnames(y) <- c("x1", "x2")
+y$group <- factor(rep(c(1, 2), each = 25))
+y$cluster <- factor(km.out$cluster)
+
+#plot
+ggplot(y, aes(x1, x2, shape = group, color = cluster)) +
+    geom_point() +
+    labs(x = "feature 1", y = "feature 2", title = "K = 3") +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Effect of `nstart`
+- `nstart` controls the number of random, initial configurations of cluster memberships for the K-means algorithm, and k`means` only reports results from the best configuration (determined in terms of the loss function)
+- `nstart` is recommended to be at least 20
+
+```{r}
+set.seed(2)
+x <- matrix(rnorm(50 * 2), ncol = 2)
+x[1:25, 1] <- x[1:25, 1] + 3
+x[1:25, 2] <- x[1:25, 2] - 4
+
+set.seed(3)
+km.out <- kmeans(x, 3, nstart = 1)
+km.out$tot.withinss
+
+km.out <- kmeans(x, 3, nstart = 20)
+km.out$tot.withinss
+```
+
+### Example 2: `iris` data
+
+#### Clustering via 2 features
+
+Split data into 3 clusters with 2 features, `Sepal.Length` and `Sepal.Width`
+```{r}
+set.seed(3.14)
+km.out <- kmeans(iris[, 1:2], 3, nstart = 20)
+
+#augment iris with cluster
+iris$cluster <- factor(km.out$cluster)
+
+#plot
+ggplot(iris, aes(Sepal.Length, Sepal.Width, color = cluster, shape = Species)) +
+    geom_point() +
+    labs(x = "Sepal Length", y = "Sepal Width", title = "K = 3") +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Clustering via 4 features
+3 clusters via all 4 features
+```{r}
+set.seed(3.14)
+km.out <- kmeans(iris[, 1:4], 3, nstart = 20)
+
+#augment iris with cluster
+iris$cluster <- factor(km.out$cluster)
+
+#plot
+ggplot(iris, aes(Sepal.Length, Sepal.Width, color = cluster, shape = Species)) +
+    geom_point() +
+    labs(x = "Sepal Length", y = "Sepal Width", title = "K = 3 with 4 features") +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+### Implementing gap statistic
+
+The gap statistic is implemented by the function `clusGap` in the library `cluster`. The function `clusGap` takes the following arguments:
+
+```r
+clusGap(x, FUNcluster = kmeans, K.max, B = 100, iter.max = 10, nstart = 20)
+```
+
+### Illustration of gap statistic
+
+Estimate the true number $K_0$ of clusteres of `iris` data using two features
+
+```{r}
+library(cluster)
+set.seed(3.14)
+gap <- clusGap(iris[, 1:2], kmeans, K.max = 10, B = 150, nstart = 20, iter.max = 20)
+
+gap$Tab[1:2, 3:4]
+
+k <- maxSE(gap$Tab[, "gap"], gap$Tab[, "SE.sim"], method = "Tibs2001SEmax")
+k
+```
+
+### Human cancer data
+
+```{r}
+library(ElemStatLearn)
+data(nci)
+
+set.seed(123)
+
+#sample rows without replacement
+rSel <- sample(1:dim(nci)[1], size = 100, replace = FALSE)
+
+#extract the selected 100 rows
+nci_a <- nci[rSel, ]
+colnames(nci_a) <- colnames(nci)
+
+#pick observations for 4 cancer types
+A1 <- which(colnames(nci_a) == "BREAST")
+A2 <- which(colnames(nci_a) == "COLON")
+A3 <- which(colnames(nci_a) == "PROSTATE")
+A4 <- which(colnames(nci_a) == "LEUKEMIA")
+
+nci_a1 <- nci_a[, c(A1, A2, A3, A4)]
+
+#split 22 observations in nci_a1 into 4 clusters
+
+nci_b <- t(nci_a1)
+set.seed(123)
+clIdx <- kmeans(nci_b, 4, iter.max = 30, nstart = 20)
+
+#plot
+nci_b <- data.frame(nci_b)
+nci_b$Type <- factor(colnames(nci_a1))
+nci_b$Cluster <- factor(clIdx$cluster)
+
+ggplot(nci_b, aes(X1, X2)) +
+    geom_point(aes(shape = Type, color = Cluster), na.rm = T) +
+    labs(x = "Gene 1 expression", y = "Gene 2 expression", title = "clustering via 100 features")
+```
+
+# Hierarchical clustering
+
+## Overview
+
+Hierarchical clustering
+
+- does not have the two disadvantages of K-means
+- requires a measure of dissimilarity between (disjoint) groups of observations
+- often produces hierarchical clusters, where each observation is a cluster at the finest level, clusters with increasing dissimilaries are nested, and all observations form one cluster at the coarsest level
+
+::: {.callout-warning}
+However, users need to determine which level of hierarchy is appropriate for their application
+:::
+
+## Two modes of hierarchical clustering
+
+1. "agglomerative" or "bottom-up": start with the finest level, merge two clusters with the smallest intergroup dissimilarity, and repeat until all observations are in one cluster
+2. "divisive" or "top-down": start with the coarsest level, split the cluster into two groups with the largest intergroup dissimilarity, and repeat until each observation is in its own cluster
+
+:::{.callout-note}
+We will be focusing on agglomerative clustering
+:::
+
+## Understanding a dendrogram
+
+A dendrogram is an upside-down tree with a height bar where  
+
+- clusters at the bottom of the tree are leaves, where ach leaf is an observation and a cluster
+- as we move up the tree from the bottom, leaves begin to fuse into larger clusters called *branches*
+- **the dissimilarity between two clusters indicates the height in the dendrogram at which the two clusters fuse**
+- The greater the height, the more dissimilar the branches or leaves are from each other at that height
+
+## Caution on hierarchical clustering
+- Hierarchical clustering often produces hierarchical clusters, where clusters obtained by cutting the dendrogram at a given height (i.i., clusters at a given height) are necessarily nested within the clusters obtained by cutting the dendrogram at any greater height, when there is only one criterion that determines clusters or groups in the data
+
+## Overviews on practical issues
+- which pairwise dissimilarity measure to use
+- is standardization needed for observations for each feature
+- Is a cluster found by a clustering algorithm sensible
+- how to interpret results
+
+## Example 1
+
+### Generate data
+```{r}
+set.seed(2)
+x <- matrix(rnorm(20*2), ncol = 2)
+x[1:10, 1] <- x[1:10, 1] + 3
+x[11:20, 2] <- x[11:20, 2] -4
+```
+
+### Clustering
+```{r}
+hc.complete <- hclust(dist(x), method = "complete")
+hc.average <- hclust(dist(x), method = "average")
+hc.single <- hclust(dist(x), method = "single")
+
+par(mfrow = c(1, 3))
+plot(hc.complete, main = "Complete Linkage", cex = 0.9)
+abline(h = 2.5, col = "red")
+plot(hc.average, main = "Average Linkage", cex = 0.9)
+abline(h = 2.5, col = "red")
+plot(hc.single, main = "Single Linkage", cex = 0.9)
+abline(h = 2.5, col = "red")
+```
+
+:::{.callout-tip}
+## Success
+This is an example of good clustering results because there are differing clusters at the same height
+:::
+
+### Heights and distances
+
+```{r}
+hc.complete$height
+min(dist(x)) == min(hc.complete$height)
+max(hc.complete$height) == max(dist(x)) 
+```
+
+### cut the dendrogram
+
+```{r}
+cutree(hc.complete, h = 2)
+cutree(hc.average, h = 2)
+cutree(hc.single, h = 2)
+```
+
+### Scaling
+HC with scaled features (i.e. each feature has standard deviation 1), Euclidian distance, and complete linkage
+
+```{r}
+xsc <- scale(x)
+par(mfrow = c(1, 1), mar = c(7, 4.5, 0, 1.4))
+plot(hclust(dist(xsc), method = "complete"), main = "", ylab = "Height")
+```
+
+## Example 2: Human cancer data
+
+```{r}
+library(ISLR)
+nci.data <- NCI60$data; nci.labs <- NCI60$labs
+```
+
+### Scale and cluster
+    
+```{r}
+sd.data <- scale(nci.data) #standardize the data
+
+#euclidian norm as pairwise dissimilarity
+data.dist <- dist(sd.data)
+plot(hclust(data.dist, method = "average"), labels = nci.labs, xlab = "", main = "Average Linkage")
+```
+
+### Classification Errors
+
+```{r}
+hc.al <- hclust(dist(sd.data), method = "average")
+hc.clusters <- cutree(hc.al, k = 4)
+table(hc.clusters, nci.labs)
+```
+
+### Height and clusters
+
+```{r}
+cutheight <- hc.al$height[length(hc.al$height) - 3]
+all.equal(cutree(hc.al, h = cutheight), cutree(hc.al, k = 4))
+
+par(mfrow = c(1, 1), mar = c(3.5, 2.5, 1.4, 1.4))
+plot(hc.al, labels = nci.labs, xlab = "", main = "")
+abline(h = cutheight, col = "red")
+```
+
+## Example 3: Subset of data
+
+```{r}
+data(nci)
+p <- dim(nci)[1]
+n <- dim(nci)[2]
+
+set.seed(123)
+rSel <- sample(1:p, size = 100, replace = F)
+cSel <- sample(1:n, size = 30, replace = F)
+nci_a <- nci[rSel, cSel]
+colnames(nci_a) <- colnames(nci)[cSel]
+```
+
+### Obtain dissimilarity
+
+```{r}
+#euclidian norm as pairwise dissimilarity
+#applied to scaled data
+library(ggdendro)
+
+dMat <- dist(scale(t(nci_a)))
+length(dMat)
+```
+
+### Average linkage
+
+```{r}
+EHC_al <- hclust(dMat, method = "average")
+ggdendrogram(EHC_al, rotate = F)
+```
+
+### Single linkage
+
+```{r}
+EHC_sl <- hclust(dMat, method = "single")
+ggdendrogram(EHC_sl, rotate = F)
+```
+
+### Complete linkage
+
+```{r}
+EHC_cl <- hclust(dMat, method = "complete")
+ggdendrogram(EHC_cl, rotate = F)
+```
+
+### customization
+
+```{r}
+library(ElemStatLearn)
+library(ggplot2)
+source("Plotggdendro.r")
+cutheight <- EHC_al$height[length(EHC_al$height) - 3]
+droplot <- plot_ggdendro(dendro_data_k(EHC_al, 3), direction = "tb", heightReferece = cutheight, expand.y = 0.2)
+droplot
+```
